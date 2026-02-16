@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import path from "node:path";
 import { Command } from "commander";
 import chalk from "chalk";
 import { loadRuleset } from "./ruleset";
@@ -11,8 +12,9 @@ program
   .name("react-native-upgrader")
   .description("Analyze a React Native project and generate an upgrade plan.")
   .option("--to <version>", "Target React Native version")
+  .option("--root <path>", "Project root directory to analyze")
   .action(() => {
-    const opts = program.opts<{ to?: string }>();
+    const opts = program.opts<{ to?: string; root?: string }>();
 
     if (!opts.to) {
       console.log(
@@ -25,9 +27,15 @@ program
     try {
       const ruleset = loadRuleset();
       const entry = ruleset[opts.to];
-      const detected = detectEnvironment();
+      const projectRoot = opts.root
+        ? path.resolve(process.cwd(), opts.root)
+        : process.cwd();
+      const detected = detectEnvironment(projectRoot);
 
       console.log(chalk.green(`Target React Native version: ${opts.to}`));
+      if (opts.root) {
+        console.log(chalk.cyan(`Project root: ${projectRoot}`));
+      }
       console.log(
         chalk.cyan(`Ruleset loaded (${Object.keys(ruleset).length} versions).`),
       );
