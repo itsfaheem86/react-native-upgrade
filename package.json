@@ -9,7 +9,7 @@
     "react-native-upgrader": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/copy-ruleset.cjs",
     "dev": "tsx src/index.ts",
     "lint": "eslint . --ext .ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
