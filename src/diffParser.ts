@@ -16,7 +16,35 @@ export type ParsedDiff = {
   files: DiffFile[];
 };
 
-export const parseDiff = (diffContent: string): ParsedDiff => {
+export type ParseDiffOptions = {
+  appName?: string;
+  templateAppName?: string;
+  stripAppNameRoot?: boolean;
+};
+
+const replaceAppNameInPath = (
+  filePath: string,
+  appName?: string,
+  templateAppName: string = "RnDiffApp",
+  stripAppNameRoot: boolean = true,
+): string => {
+  let updatedPath = filePath;
+  if (appName) {
+    updatedPath = updatedPath.split(templateAppName).join(appName);
+
+    const appRootPrefix = `${appName}/`;
+    if (stripAppNameRoot && updatedPath.startsWith(appRootPrefix)) {
+      updatedPath = updatedPath.slice(appRootPrefix.length);
+    }
+  }
+
+  return updatedPath;
+};
+
+export const parseDiff = (
+  diffContent: string,
+  options: ParseDiffOptions = {},
+): ParsedDiff => {
   const lines = diffContent.split("\n");
   const files: DiffFile[] = [];
   let currentFile: DiffFile | null = null;
@@ -50,7 +78,12 @@ export const parseDiff = (diffContent: string): ParsedDiff => {
       }
 
       currentFile = {
-        path: bPath,
+        path: replaceAppNameInPath(
+          bPath,
+          options.appName,
+          options.templateAppName,
+          options.stripAppNameRoot,
+        ),
         operation,
         hunks: [],
       };

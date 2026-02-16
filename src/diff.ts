@@ -11,9 +11,7 @@ export const extractVersion = (value?: string): string | undefined => {
 };
 
 export const buildCompareUrl = (from: string, to: string): string => {
-  const base =
-    "https://github.com/react-native-community/rn-diff-purge/compare";
-  return `${base}/release/${from}..release/${to}`;
+  return `https://raw.githubusercontent.com/react-native-community/rn-diff-purge/diffs/diffs/${from}..${to}.diff`;
 };
 
 export const fetchDiffToFile = async (

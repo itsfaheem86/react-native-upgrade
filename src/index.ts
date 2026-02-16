@@ -71,7 +71,10 @@ program
 
       await fetchDiffToFile(diffUrl, diffPath);
       const diffContent = fs.readFileSync(diffPath, "utf8");
-      const parsedDiff = parseDiff(diffContent);
+      const parsedDiff = parseDiff(diffContent, {
+        appName: detected.appName,
+        stripAppNameRoot: true,
+      });
       console.log(parsedDiff);
 
       console.log(
