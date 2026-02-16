@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { Command } from "commander";
 import chalk from "chalk";
 import { detectEnvironment } from "./detection";
 import { buildCompareUrl, extractVersion, fetchDiffToFile } from "./diff";
+import { parseDiff, formatDiffSummary } from "./diffParser";
+import { applyDiff } from "./diffApplier";
 
 const program = new Command();
 
@@ -57,8 +61,29 @@ program
       }
 
       const compareUrl = buildCompareUrl(detectedVersion, targetVersion);
-      console.log(chalk.cyan(`rn-diff-purge compare: ${compareUrl}`));
-      await fetchDiffToFile(compareUrl, "upgrade.diff");
+      const diffUrl = buildCompareUrl(detectedVersion, targetVersion);
+      console.log(chalk.cyan(`rn-diff-purge URL: ${compareUrl}`));
+
+      const diffPath = path.join(
+        fs.mkdtempSync(path.join(os.tmpdir(), "rn-upgrader-")),
+        `rn-diff-${detectedVersion}-to-${targetVersion}.patch`,
+      );
+
+      await fetchDiffToFile(diffUrl, diffPath);
+      const diffContent = fs.readFileSync(diffPath, "utf8");
+      const parsedDiff = parseDiff(diffContent);
+      console.log(parsedDiff);
+
+      console.log(
+        chalk.cyan(`\n📊 Files to be changed (${parsedDiff.files.length}):`),
+      );
+      console.log(formatDiffSummary(parsedDiff));
+
+      const applyResults = applyDiff(parsedDiff.files, projectRoot);
+      console.log(chalk.cyan(`\n✅ Applied changes:`));
+      for (const result of applyResults) {
+        console.log(`  ${result}`);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.log(chalk.red(`Failed to analyze project: ${message}`));
