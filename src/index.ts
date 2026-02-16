@@ -32,41 +32,20 @@ program
         ? path.resolve(process.cwd(), opts.root)
         : process.cwd();
       const detected = detectEnvironment(projectRoot);
-      const detectedVersion =
-        extractVersion(detected.reactNative) ||
-        extractVersion(detected.reactNativeFromNodeModules);
+      const detectedVersion = extractVersion(detected.reactNativeVersion);
       const targetVersion = extractVersion(opts.to);
 
       console.log(chalk.green(`Target React Native version: ${opts.to}`));
       if (opts.root) {
         console.log(chalk.cyan(`Project root: ${projectRoot}`));
       }
-      console.log(chalk.cyan("Detected environment:"));
-      console.log(
-        `  React Native (package.json): ${detected.reactNative ?? "unknown"}`,
-      );
-      console.log(
-        `  React Native (node_modules): ${
-          detected.reactNativeFromNodeModules ?? "unknown"
-        }`,
-      );
-      console.log(`  Kotlin: ${detected.kotlin ?? "unknown"}`);
-      console.log(`  Gradle: ${detected.gradle ?? "unknown"}`);
-      console.log(`  Android Gradle Plugin: ${detected.agp ?? "unknown"}`);
-      console.log(
-        `  Hermes enabled (Podfile): ${
-          detected.hermesEnabled === undefined
-            ? "unknown"
-            : detected.hermesEnabled
-        }`,
-      );
 
-      if (detected.notes.length > 0) {
-        console.log(chalk.yellow("Notes:"));
-        for (const note of detected.notes) {
-          console.log(`  - ${note}`);
-        }
-      }
+      console.log(chalk.cyan("Detected:"));
+      console.log(
+        `  React Native: ${detected.reactNativeVersion ?? "unknown"}`,
+      );
+      console.log(`  App name: ${detected.appName ?? "unknown"}`);
+      console.log(`  App package: ${detected.appPackage ?? "unknown"}`);
 
       if (!detectedVersion || !targetVersion) {
         console.log(
