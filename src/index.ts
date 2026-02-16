@@ -4,7 +4,7 @@ import path from "node:path";
 import { Command } from "commander";
 import chalk from "chalk";
 import { detectEnvironment } from "./detection";
-import { buildCompareUrl, extractVersion } from "./diff";
+import { buildCompareUrl, extractVersion, fetchDiffToFile } from "./diff";
 
 const program = new Command();
 
@@ -13,7 +13,7 @@ program
   .description("Analyze a React Native project and generate an upgrade plan.")
   .option("--to <version>", "Target React Native version")
   .option("--root <path>", "Project root directory to analyze")
-  .action(() => {
+  .action(async () => {
     const opts = program.opts<{
       to?: string;
       root?: string;
@@ -79,6 +79,7 @@ program
 
       const compareUrl = buildCompareUrl(detectedVersion, targetVersion);
       console.log(chalk.cyan(`rn-diff-purge compare: ${compareUrl}`));
+      await fetchDiffToFile(compareUrl, "upgrade.diff");
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.log(chalk.red(`Failed to analyze project: ${message}`));
