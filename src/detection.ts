@@ -46,6 +46,7 @@ const parseAndroidManifest = (root: string): string | undefined => {
     "main",
     "AndroidManifest.xml",
   );
+  console.log(`Looking for Android package in: ${manifestPath}`);
   const raw = readFileIfExists(manifestPath);
 
   if (!raw) {
@@ -72,13 +73,36 @@ const parseAppJson = (root: string): string | undefined => {
   }
 };
 
+const getAppName = (root: string): string | undefined => {
+  // Try app.json first
+  const appName = parseAppJson(root);
+  if (appName) {
+    return appName;
+  }
+
+  // Fallback to package.json
+  const pkgPath = path.join(root, "package.json");
+  const raw = readFileIfExists(pkgPath);
+
+  if (!raw) {
+    return undefined;
+  }
+
+  try {
+    const data = JSON.parse(raw) as { name?: string };
+    return data.name;
+  } catch (error) {
+    return undefined;
+  }
+};
+
 export const detectEnvironment = (
   root: string = process.cwd(),
 ): DetectedEnvironment => {
   return {
     projectRoot: root,
     reactNativeVersion: parsePackageJson(root),
-    appName: parseAppJson(root),
+    appName: getAppName(root),
     appPackage: parseAndroidManifest(root),
   };
 };
