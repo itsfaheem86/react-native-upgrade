@@ -58,14 +58,6 @@ export const replaceAppDetailsInContent = (
 ): string => {
   let result = content;
 
-  if (appName) {
-    result = result
-      .split(templateAppName)
-      .join(appName)
-      .split(templateAppName.toLowerCase())
-      .join(appName.toLowerCase());
-  }
-
   if (appPackage) {
     result = result
       .split(templateAppPackage)
@@ -73,7 +65,13 @@ export const replaceAppDetailsInContent = (
       .split(templateAppPackage.replaceAll(".", "/"))
       .join(appPackage.replaceAll(".", "/"));
   }
-
+  if (appName) {
+    result = result
+      .split(templateAppName)
+      .join(appName)
+      .split(templateAppName.toLowerCase())
+      .join(appName.toLowerCase());
+  }
   return result;
 };
 
