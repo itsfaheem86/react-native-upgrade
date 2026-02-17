@@ -191,9 +191,7 @@ export const applyDiff = async (
     targetVersion?: string;
     fromVersion?: string;
   } = {},
-): Promise<string[]> => {
-  const results: string[] = [];
-
+) => {
   for (const file of diffFiles) {
     try {
       const result = await applyDiffFile(
@@ -202,12 +200,10 @@ export const applyDiff = async (
         options.targetVersion,
         options.fromVersion,
       );
-      results.push(result);
+      console.log(`  ${result}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      results.push(`Error applying ${file.path}: ${message}`);
+      console.log(`Error applying ${file.path}: ${message}`);
     }
   }
-
-  return results;
 };
