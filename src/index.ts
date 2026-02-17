@@ -81,6 +81,7 @@ program
 
       const applyResults = await applyDiff(parsedDiff.files, projectRoot, {
         targetVersion,
+        fromVersion: detectedVersion,
       });
       console.log(chalk.cyan(`\n✅ Applied changes:`));
       for (const result of applyResults) {
