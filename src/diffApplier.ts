@@ -20,6 +20,45 @@ const promptUser = (question: string): Promise<boolean> => {
     });
   });
 };
+
+// Helper function to search for a file in the project directory
+const findFileInProject = (
+  projectRoot: string,
+  filename: string,
+): string | undefined => {
+  const searchDir = (dir: string, depth: number = 0): string | undefined => {
+    // Limit search depth to avoid performance issues
+    if (depth > 10) return undefined;
+
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+
+        // Skip node_modules, .git, and other common directories
+        if (
+          entry.isDirectory() &&
+          !["node_modules", ".git", "build", "dist", ".gradle"].includes(
+            entry.name,
+          )
+        ) {
+          const result = searchDir(fullPath, depth + 1);
+          if (result) return result;
+        } else if (entry.isFile() && entry.name === path.basename(filename)) {
+          return fullPath;
+        }
+      }
+    } catch (error) {
+      return undefined;
+    }
+
+    return undefined;
+  };
+
+  return searchDir(projectRoot);
+};
+
 const mergeWithGit = async (options: {
   original: string;
   target: string;
@@ -174,7 +213,7 @@ export const applyDiffFile = async (
   appName?: string,
   appPackage?: string,
 ): Promise<string> => {
-  const filePath = path.join(projectRoot, file.path);
+  let filePath = path.join(projectRoot, file.path);
   const isBinary =
     file.isBinary || (file.hunks.length === 0 && file.operation !== "delete");
 
@@ -216,7 +255,17 @@ export const applyDiffFile = async (
 
   if (file.operation === "modify") {
     if (!fs.existsSync(filePath)) {
-      return `File not found: ${file.path} (skipped)`;
+      // Try to find the file in the project
+      console.log(
+        `    File not found at expected path: ${file.path}, searching in project...`,
+      );
+      const foundPath = findFileInProject(projectRoot, file.path);
+      if (foundPath) {
+        console.log(`Found at: ${foundPath}`);
+        filePath = foundPath;
+      } else {
+        return `File not found: ${file.path} (skipped)`;
+      }
     }
 
     const userContent = fs.readFileSync(filePath, "utf8");
