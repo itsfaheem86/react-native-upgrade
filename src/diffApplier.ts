@@ -80,12 +80,15 @@ const mergeWithGit = async (options: {
         return fs.readFileSync(mergedFile, "utf8");
       }
 
+      // Print instructions in console
+      console.log(`\n📋 Instructions:`);
+      console.log(`  1. Resolve all conflicts (<<<<<<, ======, >>>>>>)`);
+      console.log(`  2. Save the file (Ctrl+S)`);
+      console.log(`  3. Close the editor to continue\n`);
       console.log(`    Opening in editor for manual resolution...`);
-
+      console.log(`    Trying VS Code...`);
       let editorProcess;
       let editorName: string;
-
-      console.log(`    Trying VS Code...`);
       editorName = "VS Code";
       editorProcess = spawnSync("code", ["--wait", mergedFile], {
         stdio: "inherit",
