@@ -79,7 +79,7 @@ program
       );
       console.log(formatDiffSummary(parsedDiff));
 
-      const applyResults = applyDiff(parsedDiff.files, projectRoot, {
+      const applyResults = await applyDiff(parsedDiff.files, projectRoot, {
         targetVersion,
       });
       console.log(chalk.cyan(`\n✅ Applied changes:`));

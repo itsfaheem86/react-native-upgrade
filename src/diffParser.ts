@@ -8,8 +8,10 @@ export type DiffHunk = {
 
 export type DiffFile = {
   path: string;
+  templatePath: string;
   operation: "add" | "modify" | "delete";
   hunks: DiffHunk[];
+  isBinary?: boolean;
 };
 
 export type ParsedDiff = {
@@ -67,6 +69,7 @@ export const parseDiff = (
       const aPath = match[1];
       const bPath = match[2];
       let operation: "add" | "modify" | "delete" = "modify";
+      let isBinary = false;
 
       i++;
       while (i < lines.length && !lines[i].startsWith("diff --git")) {
@@ -75,6 +78,10 @@ export const parseDiff = (
           operation = "add";
         } else if (headerLine.startsWith("deleted file")) {
           operation = "delete";
+        } else if (headerLine.startsWith("Binary files ")) {
+          isBinary = true;
+        } else if (headerLine.startsWith("GIT binary patch")) {
+          isBinary = true;
         } else if (headerLine.startsWith("@@")) {
           break;
         }
@@ -88,11 +95,21 @@ export const parseDiff = (
           options.templateAppName,
           options.stripAppNameRoot,
         ),
+        templatePath: bPath,
         operation,
         hunks: [],
+        isBinary,
       };
       files.push(currentFile);
       continue;
+    }
+
+    if (currentFile && line.startsWith("Binary files ")) {
+      currentFile.isBinary = true;
+    }
+
+    if (currentFile && line.startsWith("GIT binary patch")) {
+      currentFile.isBinary = true;
     }
 
     if (currentFile && line.startsWith("@@")) {
@@ -151,7 +168,8 @@ export const formatDiffSummary = (diff: ParsedDiff): string => {
         : file.operation === "delete"
           ? "🗑️"
           : "📝";
-    lines.push(`${opEmoji} ${file.path} (${file.operation})`);
+    const binaryLabel = file.isBinary ? ", binary" : "";
+    lines.push(`${opEmoji} ${file.path} (${file.operation}${binaryLabel})`);
 
     for (const hunk of file.hunks) {
       const additions = hunk.lines.filter((l) => l.startsWith("+")).length;
