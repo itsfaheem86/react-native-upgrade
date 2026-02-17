@@ -32,7 +32,8 @@ const mergeWithGit = async (options: {
     const originalFile = path.join(tmpDir, "original");
     const targetFile = path.join(tmpDir, "target");
     const userFile = path.join(tmpDir, "user");
-    const mergedFile = path.join(tmpDir, "merged");
+    // Use the original filename for the merged file so VS Code shows the correct name
+    const mergedFile = path.join(tmpDir, path.basename(options.filename));
 
     // Write the three versions to temporary files
     fs.writeFileSync(originalFile, options.original, "utf8");
