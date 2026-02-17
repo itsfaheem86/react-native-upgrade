@@ -60,9 +60,8 @@ program
         return;
       }
 
-      const compareUrl = buildCompareUrl(detectedVersion, targetVersion);
       const diffUrl = buildCompareUrl(detectedVersion, targetVersion);
-      console.log(chalk.cyan(`rn-diff-purge URL: ${compareUrl}`));
+      console.log(chalk.cyan(`rn-diff-purge URL: ${diffUrl}`));
 
       const diffPath = path.join(
         fs.mkdtempSync(path.join(os.tmpdir(), "rn-upgrader-")),
@@ -75,14 +74,14 @@ program
         appName: detected.appName,
         stripAppNameRoot: true,
       });
-      console.log(parsedDiff);
-
       console.log(
         chalk.cyan(`\n📊 Files to be changed (${parsedDiff.files.length}):`),
       );
       console.log(formatDiffSummary(parsedDiff));
 
-      const applyResults = applyDiff(parsedDiff.files, projectRoot);
+      const applyResults = applyDiff(parsedDiff.files, projectRoot, {
+        targetVersion,
+      });
       console.log(chalk.cyan(`\n✅ Applied changes:`));
       for (const result of applyResults) {
         console.log(`  ${result}`);

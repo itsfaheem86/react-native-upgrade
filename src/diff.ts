@@ -15,10 +15,9 @@ export const buildCompareUrl = (from: string, to: string): string => {
 };
 
 export const fetchDiffToFile = async (
-  compareUrl: string,
+  diffUrl: string,
   outputPath: string,
 ): Promise<void> => {
-  const diffUrl = `${compareUrl}.diff`;
   const resolvedPath = path.resolve(process.cwd(), outputPath);
 
   await new Promise<void>((resolve, reject) => {

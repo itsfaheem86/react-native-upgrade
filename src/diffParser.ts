@@ -30,7 +30,11 @@ const replaceAppNameInPath = (
 ): string => {
   let updatedPath = filePath;
   if (appName) {
-    updatedPath = updatedPath.split(templateAppName).join(appName);
+    updatedPath = updatedPath
+      .split(templateAppName)
+      .join(appName)
+      .split(templateAppName.toLowerCase())
+      .join(appName.toLowerCase());
 
     const appRootPrefix = `${appName}/`;
     if (stripAppNameRoot && updatedPath.startsWith(appRootPrefix)) {
