@@ -1,11 +1,25 @@
 import fs from "node:fs";
 import https from "node:https";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import os from "node:os";
+import readline from "node:readline";
 import { DiffFile } from "./diffParser";
 
-// Git 3-way merge to intelligently merge changes while preserving user edits
+// Helper function to prompt user for confirmation
+const promptUser = (question: string): Promise<boolean> => {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase() === "y" || answer.toLowerCase() === "yes");
+    });
+  });
+};
 const mergeWithGit = async (options: {
   original: string;
   target: string;
@@ -18,6 +32,7 @@ const mergeWithGit = async (options: {
     const originalFile = path.join(tmpDir, "original");
     const targetFile = path.join(tmpDir, "target");
     const userFile = path.join(tmpDir, "user");
+    const mergedFile = path.join(tmpDir, "merged");
 
     // Write the three versions to temporary files
     fs.writeFileSync(originalFile, options.original, "utf8");
@@ -26,34 +41,79 @@ const mergeWithGit = async (options: {
 
     // Use git merge-file for 3-way merge
     // Format: git merge-file [options] current_file base other_file
+    let mergeExitCode = 0;
+    let mergedResult = "";
+
     try {
-      execSync(
+      mergedResult = execSync(
         `git merge-file -p "${userFile}" "${originalFile}" "${targetFile}"`,
         {
           encoding: "utf8",
-          stdio: ["pipe", "pipe", "pipe"],
         },
       );
     } catch (error) {
-      // git merge-file exits with code 1 if there are conflicts, which is expected
-      if (
-        error instanceof Error &&
-        (error as any).status !== 1 &&
-        (error as any).status !== 0
-      ) {
+      // git merge-file exits with code 1 if there are conflicts
+      if (error instanceof Error && (error as any).status === 1) {
+        mergeExitCode = 1;
+        mergedResult = (error as any).stdout || "";
+      } else {
         throw error;
       }
     }
 
-    // Get the merged result
-    const result = execSync(
-      `git merge-file -p "${userFile}" "${originalFile}" "${targetFile}"`,
-      {
-        encoding: "utf8",
-      },
-    );
+    // Write merged content to file
+    fs.writeFileSync(mergedFile, mergedResult, "utf8");
 
-    return result;
+    // If there are conflicts, ask user before opening editor
+    if (mergeExitCode === 1) {
+      console.log(`\n⚠️  Merge conflicts detected in ${options.filename}`);
+
+      const shouldResolve = await promptUser(
+        "Would you like to resolve conflicts in an editor? (y/n) ",
+      );
+
+      if (!shouldResolve) {
+        console.log(
+          `    Skipped manual resolution. File contains conflict markers.`,
+        );
+        return fs.readFileSync(mergedFile, "utf8");
+      }
+
+      console.log(`    Opening in editor for manual resolution...`);
+
+      let editorProcess;
+      let editorName: string;
+
+      console.log(`    Trying VS Code...`);
+      editorName = "VS Code";
+      editorProcess = spawnSync("code", ["--wait", mergedFile], {
+        stdio: "inherit",
+      });
+
+      // If VS Code not found, fall back to nano
+      if (editorProcess?.error) {
+        console.log(`    VS Code not found, falling back to nano...`);
+        editorName = "nano";
+        editorProcess = spawnSync("nano", [mergedFile], {
+          stdio: "inherit",
+        });
+
+        if (editorProcess.error) {
+          throw new Error(
+            `Failed to open editor: ${editorProcess.error.message}`,
+          );
+        }
+      }
+
+      if (editorProcess?.status !== 0) {
+        throw new Error(
+          `${editorName! || ""} closed with exit code ${editorProcess?.status}`,
+        );
+      }
+    }
+
+    // Return the final merged content (after user edits if there were conflicts)
+    return fs.readFileSync(mergedFile, "utf8");
   } finally {
     // Cleanup temporary files
     fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -63,7 +123,7 @@ const mergeWithGit = async (options: {
 const buildFileUrl = (version: string, templatePath: string): string =>
   `https://raw.githubusercontent.com/react-native-community/rn-diff-purge/release/${version}/${templatePath}`;
 
-const downloadBinaryFile = (
+const downloadFile = (
   url: string,
   redirectsLeft: number = 3,
 ): Promise<Buffer> =>
@@ -83,7 +143,7 @@ const downloadBinaryFile = (
             ? res.headers.location
             : new URL(res.headers.location, url).toString();
           res.resume();
-          downloadBinaryFile(redirectedUrl, redirectsLeft - 1)
+          downloadFile(redirectedUrl, redirectsLeft - 1)
             .then(resolve)
             .catch(reject);
           return;
@@ -117,7 +177,7 @@ export const applyDiffFile = async (
       const downloadUrl = buildFileUrl(targetVersion, file.templatePath);
       const dir = path.dirname(filePath);
       fs.mkdirSync(dir, { recursive: true });
-      const data = await downloadBinaryFile(downloadUrl);
+      const data = await downloadFile(downloadUrl);
       fs.writeFileSync(filePath, data);
       return `Downloaded binary: ${file.path}`;
     }
@@ -130,7 +190,7 @@ export const applyDiffFile = async (
       const downloadUrl = buildFileUrl(targetVersion, file.templatePath);
       const dir = path.dirname(filePath);
       fs.mkdirSync(dir, { recursive: true });
-      const data = await downloadBinaryFile(downloadUrl);
+      const data = await downloadFile(downloadUrl);
       fs.writeFileSync(filePath, data);
       return `Downloaded file: ${file.path}`;
     }
@@ -156,11 +216,11 @@ export const applyDiffFile = async (
     if (targetVersion && fromVersion) {
       try {
         const baseUrl = buildFileUrl(fromVersion, file.templatePath);
-        const originalData = await downloadBinaryFile(baseUrl);
+        const originalData = await downloadFile(baseUrl);
         const originalContent = originalData.toString("utf8");
 
         const targetUrl = buildFileUrl(targetVersion, file.templatePath);
-        const targetData = await downloadBinaryFile(targetUrl);
+        const targetData = await downloadFile(targetUrl);
         const targetContent = targetData.toString("utf8");
 
         const mergedContent = await mergeWithGit({
