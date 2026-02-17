@@ -20,7 +20,9 @@ export type ParsedDiff = {
 
 export type ParseDiffOptions = {
   appName?: string;
+  appPackage?: string;
   templateAppName?: string;
+  templateAppPackage?: string;
   stripAppNameRoot?: boolean;
 };
 
@@ -47,10 +49,42 @@ const replaceAppNameInPath = (
   return updatedPath;
 };
 
+const replaceAppDetailsInContent = (
+  content: string,
+  appName?: string,
+  appPackage?: string,
+  templateAppName: string = "RnDiffApp",
+  templateAppPackage: string = "com.rndiffapp",
+): string => {
+  let result = content;
+
+  if (appName) {
+    result = result
+      .split(templateAppName)
+      .join(appName)
+      .split(templateAppName.toLowerCase())
+      .join(appName.toLowerCase());
+  }
+
+  if (appPackage) {
+    result = result
+      .split(templateAppPackage)
+      .join(appPackage)
+      .split(templateAppPackage.replaceAll(".", "/"))
+      .join(appPackage.replaceAll(".", "/"));
+  }
+
+  return result;
+};
+
 export const parseDiff = (
   diffContent: string,
   options: ParseDiffOptions = {},
 ): ParsedDiff => {
+  const appName = options.appName;
+  const appPackage = options.appPackage;
+  const templateAppName = options.templateAppName ?? "RnDiffApp";
+  const templateAppPackage = options.templateAppPackage ?? "com.rndiffapp";
   const lines = diffContent.split("\n");
   const files: DiffFile[] = [];
   let currentFile: DiffFile | null = null;
@@ -134,7 +168,14 @@ export const parseDiff = (
             hunkLine.startsWith("-") ||
             hunkLine.startsWith(" ")
           ) {
-            hunkLines.push(hunkLine);
+            const processedLine = replaceAppDetailsInContent(
+              hunkLine,
+              appName,
+              appPackage,
+              templateAppName,
+              templateAppPackage,
+            );
+            hunkLines.push(processedLine);
           } else if (hunkLine === "\\ No newline at end of file") {
             hunkLines.push(hunkLine);
           }
@@ -168,18 +209,23 @@ export const formatDiffSummary = (diff: ParsedDiff): string => {
         : file.operation === "delete"
           ? "🗑️"
           : "📝";
-    const binaryLabel = file.isBinary ? ", binary" : "";
-    lines.push(`${opEmoji} ${file.path} (${file.operation}${binaryLabel})`);
+    const binaryLabel = file.isBinary ? " [binary]" : "";
 
+    // Calculate total additions and deletions for the file
+    let totalAdditions = 0;
+    let totalDeletions = 0;
     for (const hunk of file.hunks) {
-      const additions = hunk.lines.filter((l) => l.startsWith("+")).length;
-      const deletions = hunk.lines.filter((l) => l.startsWith("-")).length;
-      if (additions > 0 || deletions > 0) {
-        lines.push(
-          `   Lines ${hunk.oldStart}-${hunk.oldStart + hunk.oldCount - 1}: +${additions}/-${deletions}`,
-        );
-      }
+      totalAdditions += hunk.lines.filter((l) => l.startsWith("+")).length;
+      totalDeletions += hunk.lines.filter((l) => l.startsWith("-")).length;
     }
+
+    // Format like: ✨ src/App.tsx [+120, -45]
+    const stats =
+      totalAdditions > 0 || totalDeletions > 0
+        ? ` [+${totalAdditions}, -${totalDeletions}]`
+        : "";
+
+    lines.push(`${opEmoji} ${file.path}${binaryLabel}${stats}`);
   }
 
   return lines.join("\n");
