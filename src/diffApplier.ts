@@ -4,7 +4,7 @@ import path from "node:path";
 import { execSync, spawnSync } from "node:child_process";
 import os from "node:os";
 import readline from "node:readline";
-import { DiffFile } from "./diffParser";
+import { DiffFile, replaceAppDetailsInContent } from "./diffParser";
 
 // Helper function to prompt user for confirmation
 const promptUser = (question: string): Promise<boolean> => {
@@ -171,6 +171,8 @@ export const applyDiffFile = async (
   projectRoot: string,
   targetVersion?: string,
   fromVersion?: string,
+  appName?: string,
+  appPackage?: string,
 ): Promise<string> => {
   const filePath = path.join(projectRoot, file.path);
   const isBinary =
@@ -195,7 +197,10 @@ export const applyDiffFile = async (
       const dir = path.dirname(filePath);
       fs.mkdirSync(dir, { recursive: true });
       const data = await downloadFile(downloadUrl);
-      fs.writeFileSync(filePath, data);
+      fs.writeFileSync(
+        filePath,
+        replaceAppDetailsInContent(data.toString("utf8"), appName, appPackage),
+      );
       return `Downloaded file: ${file.path}`;
     }
 
@@ -228,8 +233,16 @@ export const applyDiffFile = async (
         const targetContent = targetData.toString("utf8");
 
         const mergedContent = await mergeWithGit({
-          original: originalContent,
-          target: targetContent,
+          original: replaceAppDetailsInContent(
+            originalContent,
+            appName,
+            appPackage,
+          ),
+          target: replaceAppDetailsInContent(
+            targetContent,
+            appName,
+            appPackage,
+          ),
           userVersion: userContent,
           filename: file.path,
         });
@@ -255,6 +268,8 @@ export const applyDiff = async (
     targetVersion?: string;
     fromVersion?: string;
   } = {},
+  appName?: string,
+  appPackage?: string,
 ) => {
   for (const file of diffFiles) {
     try {
@@ -263,6 +278,8 @@ export const applyDiff = async (
         projectRoot,
         options.targetVersion,
         options.fromVersion,
+        appName,
+        appPackage,
       );
       console.log(`  ${result}`);
     } catch (error) {

@@ -49,7 +49,7 @@ const replaceAppNameInPath = (
   return updatedPath;
 };
 
-const replaceAppDetailsInContent = (
+export const replaceAppDetailsInContent = (
   content: string,
   appName?: string,
   appPackage?: string,

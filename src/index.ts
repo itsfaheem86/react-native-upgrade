@@ -80,10 +80,16 @@ program
       console.log(formatDiffSummary(parsedDiff));
 
       console.log(chalk.cyan(`\n✅ Applied changes:`));
-      await applyDiff(parsedDiff.files, projectRoot, {
-        targetVersion,
-        fromVersion: detectedVersion,
-      });
+      await applyDiff(
+        parsedDiff.files,
+        projectRoot,
+        {
+          targetVersion,
+          fromVersion: detectedVersion,
+        },
+        detected.appName,
+        detected.appPackage,
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.log(chalk.red(`Failed to analyze project: ${message}`));
