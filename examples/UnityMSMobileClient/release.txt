@@ -1,0 +1,188 @@
+# VC 1.3.5 (35)
+- Bugs
+* Sharing feature not working on android 34 fixed.
+* App crashing sometimes fixed.
+
+# VC 1.3.4 (34)
+- Features
+* Allow society to edit past 90 days record and history.
+* Target version increased to 34.
+
+
+# VC 1.3.3 (33)
+- Features
+* Better report generation for society with cron jobs.
+* Able to create report and amount history in wide date range.
+
+- Bugs
+* Loading ui fixes.
+
+# VC 1.3.2 (32)
+- Features
+* PDF report generation for each month added.
+* Analytics graph improved.
+
+- Bugs
+* Search bar mounting issue fixed.
+* Society amount history cache issue fixed.
+
+# VC 1.3.1 (31)
+- Features
+* Society can block and unblock users.
+* Old record and amount history update prevention added.
+* Cache layer improved.
+* Analytics added for both society and members.
+
+- Bugs
+* Deeplink not working properly fixed.
+* User need to refresh to see latest data/Cache data always showing fixed.
+
+# VC 1.3.0 (30)
+- Bugs
+* OTP copy past/auto fill not working fixed.
+* Reset password token error fixed.
+* Auth token not provided or invalid while logging out fixed.
+
+# VC 1.2.8/1.2.9 (28/29)
+- Features
+* Offline access to the application added.
+* Image loading time improved.
+* Sensitive information protection improved.
+- Bugs
+* Forbidden error and logging out while switching user fixed.
+
+# VC 1.2.7 (27)
+- Features
+* Search societies function added.
+- Bugs
+* Loading screen flicking on start fixed.
+
+
+# VC 1.2.6 (26)
+- Features
+* Payment history of all members added.
+* Last seen of members added.
+- Bugs
+* Logout bug fixed.
+* Verify token infinite loading on deeplink click fixed.
+
+# VC 1.2.5 (25)
+- Features
+* Deeplink added.
+* Share society member info as a picture added.
+* Search membership requests added.
+* Ui/Ux improvements.
+
+- Bugs
+* Cropper not working sometimes fixed.
+* Bottom navigation flick fixed.
+
+# VC 1.2.4 (24)
+- Features
+* Received amount history added.
+* Helper buttons added.
+- Bugs
+* Receivable bug fixed.
+* New password validation bug fixed.
+
+# VC 1.2.3 (23)
+- Features
+- Bugs
+* Error while creating individual record fixed.
+
+# VC 1.2.2 (22)
+- Features
+- Bugs
+* Meeting screen removed.
+
+# VC 1.2.1 (21)
+- Features
+- Bugs
+* Extra balance separate line not showing fixed.
+
+# VC 1.2.0 (20)
+- Features
+* Network aware button added.
+* Switch between users functionality added.
+* Member can see extra balance info.
+- Bugs
+* Prevent refetch in offline.
+
+# VC 1.1.9 (19)
+- Features
+* Remember me by default.
+- Bugs
+* Email with space validation bug fixed.
+* Pagination bug fixed.
+
+# VC 1.1.8 (18)
+- Features
+- Bugs
+* Select profile picture not working in some devices fixed.
+
+# VC 1.1.7 (17)
+- Features
+* Analytics added to see user behavior.
+- Bugs
+* Cache update bug fixed.
+
+# VC 1.1.6 (16)
+- Features
+- Bugs
+* Cache update bug fixed.
+* Extra balance history bug fixed.
+
+# VC 1.1.5 (15)
+- Features
+* Pagination added to reduce the initial fetch size.
+- Bugs
+* Cache update bug fixed.
+
+# VC 1.1.4 (14)
+- Features
+* Members can see society record tracks info.
+
+# VC 1.1.3 (13)
+- Features
+* Members can see society records.
+
+# VC 1.1.2 (12)
+- Bugs
+* Avatar not showing for society fixed.
+
+# VC 1.1.1 (11)
+-Features
+* Extra balance history added.
+* Ui/Ux improved.
+- Bugs
+* Avatar upload bug fixed.
+
+# VC 1.1.0 (10)
+- Features
+* User can see record date.
+
+# VC 1.0.9 (9)
+- Features
+* Heigh resolution svg updated.
+* Dark mode added.
+- Bugs
+* Second time credit and cost update bug fixed.
+* Small bug fixes.
+
+
+# VC 1.0.8 (8)
+- Features
+* Remove requested accounts without accepting it.
+
+* VC 1.0.7 (7)
+- Bugs
+* Dropdown direction fixed.
+* Removed unnecessary permissions.
+
+# VC 1.0.5 (6)
+-Features
+* Local push notification added.
+- Bugs
+* Date picker bug fixed.
+* Logout forbidden error fixed.
+* Not scrolling in some devices fixed.

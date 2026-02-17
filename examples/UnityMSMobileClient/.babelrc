@@ -1,0 +1,8 @@
+{
+  "env": {
+    "production": {
+      "plugins": ["transform-remove-console"]
+    }
+  }
+}
+// https://stackoverflow.com/questions/38939917/removing-console-log-from-react-native-app

@@ -1,0 +1,118 @@
+# Todo
+# Realtime data
+# Social signin
+# There is config to boost firebase performance and build performance
+# Test cases should be written
+# Types with icons
+# Pagination for dropdown picker, refer listProps of dropdown picker
+# Deep linking - After custom notification
+
+- Priority
+# Show user info/card and navigate to user info in amount history card
+# User activity log should be added to prevent user errors and allow them to recover
+# Navigation stack poping in multiple users login flow
+
+- Progress
+# https://react-native-community.github.io/upgrade-helper/?from=0.68.2&to=0.72.0&package=com.codersauthority.unityms&name=unityms
+
+- Done
+-> v1.3.3
+# Better report generation for society with cron jobs
+-> v1.3.2
+# SearchBar destroying on search fixed
+# Book for each month - Only for analytics reason, we can have one book I think
+-> We don't need book since we can create analytics report by cron job iteration
+# Monthly and yearly report generation
+# Income, expense graph need to be added
+// Write script to do it instead of cumulating/aggregate the data on the fly
+// Received money
+// Expense
+// Receivable
+// While generating report we need monthly cumulative data, which need to be implemented in the backend, For now I am generating pdf with individual data
+-> v1.3.1
+# Application showing cached value all the time
+# Datepicker edge cases and update record and amount history need to be tested
+# Modify date, year and month according to minimumDate, maximumDate
+# To make it work prevent update after certain time period
+# Cache layer should be added to make the application works in offline mode
+# Society should be able to deactivate user(Don't delete user info)
+# Deeplink is overwritten by auth guard let's create a deeplink acknowledger and let auth guard wait for it to acknowledge before resetting navigation.
+# Also use navigationRef to get current navigation/params that classifies that app is opened with deeplink and use that info to acknowledge the components.
+# List blocked users
+# Implement unblock users
+# Test all the test cases and deploy
+-> v1.3.0
+# OTP copy past/auto fill not working fixed - v1.3.0
+# Reset token error - v1.3.0
+# Auth token not provided or invalid - v1.3.0
+# User last seen for society
+# Payment history of all users in bottom tab
+# Deeplink for reset password
+# Society member count for members
+# Await for avatars to load improvement.
+# Share account info.
+# Prevent dialog box close on outer tab while capturing.
+# Share arrears info of members to any social media.
+# Search function for members
+# Logout loading indicator
+# Switch user loading indicator
+# Pagination for types
+# Member avatar breaking while creating credit or cost record.
+# Network aware button - Don't disable it, modify onClick to show toast message
+# Set limit for members (256)
+# Prevent deletion of types if used
+# Pagination - pageInfo plz, cause I am using cacheInfo somewhere as naming convention
+# Ui design for theme adaption
+# Think about picture upload with key only, which mean not full uri
+# Need to think about delete previous object and await for copy
+# Update cost track mutation cache not updating
+# Svg update
+# Check ui after user kicked out from society (Auth provider and remove token removal logic from errorHandler)
+# Idea for auth provider, Listen to userId and decide to show lading(only navigate if success) screen or login screen
+# NotificationProvider not recognizing updated user since we are sending forbidden error
+# Society list heading not found
+# Custom notifications
+# Refer typography and common styles
+# Show activity indicator on image loading
+# Settings to control notifications
+# Clickable cards and other card color different need to be added
+# Record should have date picket to pick from
+# Check date picker with 22 as month
+# Confirm dialog for all error prone actions
+# Crop image function
+# Forgot password button
+# Dropdown infinity bug while changing values
+# Receivable property should be added in the backend and need to change society info card
+# Add fines (If individual credit, cost ok I think)
+# Card action should be clickable. (No need for now)
+# Common parent need to be defined. (Checkout safe-area-view-context), Update: We don't need safe area view I think
+# Remove caches on logout and before login to make the app more stable
+# Society should be able to remove accepted members if no record exist
+# Need to show header for back button and more ui/ux purpose
+# API level 32 need to permission to receive notification - https://rnfirebase.io/messaging/usage
+# Check heading for each list and pages (Need common format)
+# Update or create title change in some crud screens sentence check
+# File upload not working in release mode, need to look into it
+# Profile edit (ImagePicker modification)
+# Need to list dependencies to minimize app size in release mode (Adding pod rules)
+# Card is not visible in light mode
+# Image and avatar is not same need to change avatar atom name
+# Config need to be added
+# Add style suffix to all styles
+# Typography has styles but FontWeights has values but can't differentiate things
+# Graphql hooks name should contain query and mutation indicator (Let's wait and see)
+# Add form validation logic to text input
+# Make box input use text input
+# Date time limit string length
+# Add icon button
+# Button with icons and text
+# Need to add checkbox with labels
+# TextButton
+# Add header
+# Toast message
+# Dialog box
+# Otp component need to be improved (Backspace response added)
+
+- Conclusion
+# TextInput and YupTextInput is ok to have
+# Header - Can use react native predefined header, need to refer documentation

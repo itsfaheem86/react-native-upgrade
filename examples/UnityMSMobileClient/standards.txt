@@ -1,0 +1,4 @@
+# Styles and Style variables don't need to have style suffix but the parent exporter should have it.
+# Style sheets also don't need to have style suffix.
+# Style props should have style prefix.
+# If we pass only one style as prop we don't need to have prefix but if we have multiple styles passing as props we need to have prefix to distinguish between them.

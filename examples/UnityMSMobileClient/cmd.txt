@@ -1,0 +1,2 @@
+# Release mode
+# react-native run-android --variant=release

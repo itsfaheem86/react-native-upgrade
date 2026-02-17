@@ -1,0 +1,20 @@
+# Arrears
+* Member arrears can be derived from credit and cost,
+- Credit - Subscription
+- Cost - Loans 
+- Both credit and cost can have tracks with it, but if we need to mention about society expenses, user should not add/select members.
+- If they need to mention some user we should consider about tagging functionality.
+
+
+# Receivable in both credit and cost, So if anything have tracks we will make it as receivables for now.
+# Also think about society paying individual with expecting them to pay it later. eg. Marriage allowance.
+
+
+# Society has receivables
+Society{
+  amount - received/paid
+  receivable - receivable amount
+  total - total credit or cost
+}
+# Show only money in hand and total receivables
+Money in hand = (credit.amount + cost.amount) - cost.total

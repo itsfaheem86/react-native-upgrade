@@ -1,0 +1,9 @@
+NotFound, Logo - 44px, 700
+Heading - 32px, 700
+Input Labels and Sub Heading Paragraphs - 16px, 400
+Placeholders - 14px, 400
+Button Labels - 16px, 500
+SignUp or Login or size - 20px, 500
+Icon - 24px
+Large content - 30px, 700
+Small description / Text Buttons - 12px, 400

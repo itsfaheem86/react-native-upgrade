@@ -1,0 +1,145 @@
+# Redux Toolkit Quick Start
+# https://redux.js.org/tutorials/quick-start
+
+# useQuery on state change
+# https://github.com/apollographql/apollo-client/issues/9157
+# or try to use useLazyQuery
+
+# Graphql and redux
+# https://www.youtube.com/watch?v=N2q-ZYuQWI8&ab_channel=BenAwad
+
+# Redux Debugger plugin in Flipper is unavailable
+# https://stackoverflow.com/questions/69538539/redux-debugger-plugin-in-flipper-is-unavailable
+# Diagnose flipper
+# https://fbflipper.com/docs/getting-started/android-native/#diagnostics
+# Need to set sdk path correctly
+# https://stackoverflow.com/questions/71744103/android-emulator-unable-to-connect-to-flipper
+# adb shell am start -n <APP_ID>/com.facebook.flipper.android.diagnostics.FlipperDiagnosticActivity
+
+# Learn nested map library
+# https://www.youtube.com/watch?v=lQ7t20gFR14&ab_channel=BenAwad
+
+// ToDo
+
+# Aspect ratio
+# https://dev.to/hrastnik/the-react-native-aspectratio-ge3
+
+# Elevation ios
+# https://www.codegrepper.com/code-examples/javascript/elevation+for+ios+react+native
+
+# PropTypes with shape
+# https://stackoverflow.com/questions/32325912/react-proptype-array-with-shape
+
+# How to navigate between different nested stacks in react navigation
+# https://stackoverflow.com/questions/49826920/how-to-navigate-between-different-nested-stacks-in-react-navigation
+
+# Introducing the New JSX Transform
+# https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html
+# Dep @babel/plugin-transform-react-jsx
+
+# React-native : Dynamically update header title in stack navigator
+# https://stackoverflow.com/questions/46200454/react-native-dynamically-update-header-title-in-stack-navigator
+# https://reactnavigation.org/docs/headers/#using-params-in-the-title
+# https://reactnavigation.org/docs/header-buttons
+
+# With useEffect, how can I skip applying an effect upon the initial render?
+# https://stackoverflow.com/questions/53179075/with-useeffect-how-can-i-skip-applying-an-effect-upon-the-initial-render
+
+# OTP back button ref help
+# https://stackoverflow.com/questions/53085778/how-to-check-for-backspacedelete-keypress-in-react-native-ios
+# https://github.com/naveenvignesh5/react-native-otp-textinput/commit/84c0e6ad328818eae004a1ec93aaa10397e69f93
+
+# npm v7 does not install linked packages dependencies (npm link fail)
+# https://github.com/npm/cli/issues/2339
+
+# Cannot find module '@babel/plugin-transform-shorthand-properties'
+# https://github.com/software-mansion/react-native-gesture-handler/issues/1765
+
+# Supporting safe areas
+# https://reactnavigation.org/docs/handling-safe-area/
+
+# Nested navigation reset
+# https://stackoverflow.com/questions/63442408/how-to-reset-nested-navigators-react-navigation-v5
+
+# Nested navigation
+# https://stackoverflow.com/questions/49826920/how-to-navigate-between-different-nested-stacks-in-react-navigation
+
+# onSuccess global handler ref
+# https://www.apollographql.com/docs/link/
+
+# Drawer not closing on outer click
+# https://github.com/react-navigation/react-navigation/issues/6405
+# Debugging issue
+
+# Button can't be clicked while keyboard is visible - react native
+# https://stackoverflow.com/questions/57941342/button-cant-be-clicked-while-keyboard-is-visible-react-native
+
+# There is config to boost firebase performance and build performance
+# https://rnfirebase.io/
+
+# File not uploading when we upload file in release mode
+# https://github.com/axios/axios/issues/4800 axios to ^0.24.0
+
+# Advanced notification permission setting for ios
+# https://rnfirebase.io/messaging/ios-permissions
+
+# How to receive background notifications in notifee and FCM, Double notification because sending title and body
+# https://stackoverflow.com/questions/71656727/how-to-recieve-background-notifications-in-notifee-and-fcm
+
+# Remove unused dependencies permissions
+# https://stackoverflow.com/questions/37417259/disable-dependency-library-permission
+# https://stackoverflow.com/questions/31616334/how-to-remove-specific-permission-when-build-android-app-with-gradle
+
+# Modifying apollo cached data in 2 ways
+- Method 1, Identify the object
+cache.modify({
+  id: cache.identify({
+    __ref: '__typename:_id',
+  }),
+  fields: {
+    _id(cached) {
+      console.log({cached});
+      return cached*something;
+    },
+  },
+});
+- Method 2, Get it by method name
+cache.modify({
+  fields: {
+    getSocietyAccounts(cached) {
+      console.log({cached});
+    },
+  },
+});
+
+# While doing pagination I realize type policy only applying to get not fetchMore, we need to have policy to merge 2 data.
+
+# Handle fetch more error
+# https://github.com/apollographql/react-apollo/issues/2759
+
+# Deeplink test
+# https://reactnavigation.org/docs/deep-linking/
+# npx uri-scheme open https://mohamedfaheem.netlify.app/links/unityms/ForgotPassword --android
+# npx uri-scheme open "https://mohamedfaheem.netlify.app/links/unityms/VerifyOTP?token=1234&userType=Member&email=jstrfaheem065@gmail.com" --android
+
+# Flicking on linking config reason
+# https://reactnavigation.org/docs/navigation-container/#fallback
+
+# Advanced topics on caching in Apollo Client
+# https://www.apollographql.com/docs/react/caching/advanced-topics/#:~:text=Persisting%20the%20cache,a%20storage%20provider%20to%20persistCache%20.
+
+# Caused by: java.lang.RuntimeException: Requested enabled DevSupportManager, but BridgeDevSupportManager class was not found or could not be created
+# https://github.com/facebook/react-native/issues/41288
+
+# Execution failed for task ':app:processDebugResources'.
+> Could not resolve all files for configuration ':app:debugRuntimeClasspath'.
+> Failed to transform ucrop-2.2.6-native.aar 
+# ./gradlew build --stacktrace # to get better error message
+# https://stackoverflow.com/questions/56553879/android-studio-cause-error-86-bad-cpu-type-in-executable
+softwareupdate --install-rosetta
+
+# error No simulator available with name "iPhone 13"
+# https://github.com/infinitered/ignite/issues/2170#issuecomment-1250094407
+
+# error: Multiple commands produce '/Users/faheem/Library/Developer/Xcode/DerivedData/unityms-aabowngxhuhwsrgjnyiuoragyzne/Build/Products/Debug-iphonesimulator/unityms.app/AntDesign.ttf'
+# https://github.com/oblador/react-native-vector-icons/issues/1074#issuecomment-561773622

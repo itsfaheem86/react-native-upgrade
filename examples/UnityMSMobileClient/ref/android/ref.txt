@@ -1,0 +1,1 @@
+# While updating launcher icon consider background color of the icon like the screenshot.
