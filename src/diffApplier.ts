@@ -264,7 +264,7 @@ export const applyDiffFile = async (
         filePath,
         replaceAppDetailsInContent(data.toString("utf8"), appName, appPackage),
       );
-      return `✅ Downloaded file: ${file.path}`;
+      return `✅ Added file: ${file.path}`;
     }
 
     return `⏭️  File add skipped: ${file.path}`;
@@ -343,7 +343,18 @@ export const applyDiff = async (
   } = {},
   appName?: string,
   appPackage?: string,
-) => {
+): Promise<{
+  applied: number;
+  skipped: number;
+  failed: number;
+  failedFiles: string[];
+  total: number;
+}> => {
+  let applied = 0;
+  let skipped = 0;
+  let failed = 0;
+  const failedFiles: string[] = [];
+
   for (const file of diffFiles) {
     try {
       const result = await applyDiffFile(
@@ -355,9 +366,29 @@ export const applyDiff = async (
         appPackage,
       );
       console.log(`  ${result}`);
+
+      const trimmed = result.trim();
+      if (trimmed.startsWith("❌")) {
+        failed += 1;
+        failedFiles.push(file.path);
+      } else if (trimmed.startsWith("⏭️")) {
+        skipped += 1;
+      } else {
+        applied += 1;
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.log(`Error applying ${file.path}: ${message}`);
+      failed += 1;
+      failedFiles.push(file.path);
     }
   }
+
+  return {
+    applied,
+    skipped,
+    failed,
+    failedFiles,
+    total: diffFiles.length,
+  };
 };

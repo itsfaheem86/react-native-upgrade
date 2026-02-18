@@ -80,7 +80,7 @@ program
       console.log(formatDiffSummary(parsedDiff));
 
       console.log(chalk.cyan(`\n✅ Applied changes:`));
-      await applyDiff(
+      const diffStats = await applyDiff(
         parsedDiff.files,
         projectRoot,
         {
@@ -90,6 +90,72 @@ program
         detected.appName,
         detected.appPackage,
       );
+
+      const pnpmLock = path.join(projectRoot, "pnpm-lock.yaml");
+      const yarnLock = path.join(projectRoot, "yarn.lock");
+      const npmLock = path.join(projectRoot, "package-lock.json");
+      const iosDir = path.join(projectRoot, "ios");
+
+      let packageManager = "npm";
+      if (fs.existsSync(pnpmLock)) {
+        packageManager = "pnpm";
+      } else if (fs.existsSync(yarnLock)) {
+        packageManager = "yarn";
+      } else if (fs.existsSync(npmLock)) {
+        packageManager = "npm";
+      }
+
+      const installCommand =
+        packageManager === "pnpm"
+          ? "pnpm install"
+          : packageManager === "yarn"
+            ? "yarn install"
+            : "npm install";
+
+      const upgradeHelperUrl = `https://react-native-community.github.io/upgrade-helper/?from=${encodeURIComponent(
+        detectedVersion,
+      )}&to=${encodeURIComponent(targetVersion)}&package=${encodeURIComponent(
+        detected.appPackage ?? "",
+      )}&name=${encodeURIComponent(detected.appName ?? "")}`;
+
+      if (diffStats.failed === 0) {
+        console.log(chalk.green(`All changes applied successfully!`));
+      } else {
+        console.log(
+          chalk.yellow(
+            `\nSome changes failed (${diffStats.failed}). Please apply them manually before proceeding:`,
+          ),
+        );
+        for (const failedFile of diffStats.failedFiles) {
+          console.log(`  - ${failedFile}`);
+        }
+        console.log(`\nManual apply guidance:`);
+        console.log(`  1. Open the upgrade helper URL:`);
+        console.log(`     ${upgradeHelperUrl}`);
+        console.log(
+          `  2. Apply the failed patches(${diffStats.failed}) manually to the files listed above.`,
+        );
+      }
+
+      console.log(chalk.cyan(`\n🛠️  Next steps after the upgrade:`));
+      console.log(`  1. Remove node_modules and reinstall dependencies:`);
+      console.log(`     rm -rf node_modules`);
+      console.log(`     ${installCommand}`);
+      console.log(`  2. Clear caches if you hit build or Metro issues:`);
+      console.log(`     ${packageManager} start -- --reset-cache`);
+      console.log(`  3. If iOS is used, install pods:`);
+      if (fs.existsSync(iosDir)) {
+        console.log(`     cd ios && pod install`);
+      } else {
+        console.log(`     (no ios/ directory found)`);
+      }
+      console.log(`  4. Rebuild the app:`);
+      console.log(`     ${packageManager} run android`);
+      console.log(`     ${packageManager} run ios`);
+      console.log(`  5. Review and fix upgrade issues:`);
+      console.log(`     - Check for incompatible or deprecated dependencies`);
+      console.log(`     - Search for deprecated APIs and adjust code`);
+      console.log(`     - Run tests and address warnings/errors`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.log(chalk.red(`Failed to analyze project: ${message}`));
