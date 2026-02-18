@@ -1,2 +1,0 @@
-# prettier-plugin-organize-imports overwriting vscode organize imports config
-# credit should be renamed to debit but currently I am only changing credit text in the frontend :(
