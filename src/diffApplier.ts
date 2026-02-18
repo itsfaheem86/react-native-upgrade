@@ -242,10 +242,10 @@ export const applyDiffFile = async (
       fs.mkdirSync(dir, { recursive: true });
       const data = await downloadFile(downloadUrl);
       fs.writeFileSync(filePath, data);
-      return `Downloaded binary: ${file.path}`;
+      return `📦 Downloaded binary: ${file.path}`;
     }
 
-    return `Binary file skipped: ${file.path}`;
+    return `⏭️  Binary file skipped: ${file.path}`;
   }
 
   if (file.operation === "add") {
@@ -258,31 +258,31 @@ export const applyDiffFile = async (
         filePath,
         replaceAppDetailsInContent(data.toString("utf8"), appName, appPackage),
       );
-      return `Downloaded file: ${file.path}`;
+      return `✅ Downloaded file: ${file.path}`;
     }
 
-    return `File add skipped: ${file.path}`;
+    return `⏭️  File add skipped: ${file.path}`;
   }
 
   if (file.operation === "delete") {
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
-    return `Deleted ${file.path}`;
+    return `🗑️  Deleted ${file.path}`;
   }
 
   if (file.operation === "modify") {
     if (!fs.existsSync(filePath)) {
       // Try to find the file in the project
       console.log(
-        `    File not found at expected path: ${file.path}, searching in project...`,
+        `    🔍 File not found at expected path: ${file.path}, searching in project...`,
       );
       const foundPath = findFileInProject(projectRoot, file.path);
       if (foundPath) {
-        console.log(`Found at: ${foundPath}`);
+        console.log(`    ✓ Found at: ${foundPath}`);
         filePath = foundPath;
       } else {
-        return `File not found: ${file.path} (skipped)`;
+        return `❌ File not found: ${file.path} (skipped)`;
       }
     }
 
@@ -315,14 +315,14 @@ export const applyDiffFile = async (
         });
 
         fs.writeFileSync(filePath, mergedContent, "utf8");
-        return `Modified ${file.path} (git 3-way merge)`;
+        return `🔀 Modified ${file.path} (git 3-way merge)`;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
-        return `Failed to git-merge ${file.path}: ${errorMsg} (skipped)`;
+        return `❌ Failed to git-merge ${file.path}: ${errorMsg} (skipped)`;
       }
     }
 
-    return `File modify skipped (no version info for git merge): ${file.path}`;
+    return `⏭️  File modify skipped (no version info for git merge): ${file.path}`;
   }
 
   return `Unknown operation for ${file.path}`;
