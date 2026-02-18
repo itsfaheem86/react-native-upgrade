@@ -92,10 +92,22 @@ const mergeWithGit = async (options: {
         },
       );
     } catch (error) {
-      // git merge-file exits with code 1 if there are conflicts
-      if (error instanceof Error && (error as any).status === 1) {
-        mergeExitCode = 1;
-        mergedResult = (error as any).stdout || "";
+      // git merge-file exits with non-zero code if there are conflicts or issues
+      // Exit code 1 = conflicts, Exit code 2+ = other issues but may still have output
+      if (error instanceof Error && (error as any).status) {
+        const exitCode = (error as any).status;
+        const stdout = (error as any).stdout || "";
+
+        // If we got output, use it even with exit code 2+
+        if (stdout) {
+          mergeExitCode = exitCode;
+          mergedResult = stdout;
+        } else {
+          // No output, this is a real error
+          throw new Error(
+            `git merge-file failed with exit code ${exitCode}: ${(error as any).stderr || error.message}`,
+          );
+        }
       } else {
         throw error;
       }
@@ -105,7 +117,7 @@ const mergeWithGit = async (options: {
     fs.writeFileSync(mergedFile, mergedResult, "utf8");
 
     // If there are conflicts, ask user before opening editor
-    if (mergeExitCode === 1) {
+    if (mergeExitCode > 0) {
       console.log(`\n⚠️  Merge conflicts detected in ${options.filename}`);
 
       const shouldResolve = await promptUser(
@@ -125,13 +137,19 @@ const mergeWithGit = async (options: {
       console.log(`  2. Save the file (Ctrl+S)`);
       console.log(`  3. Close the editor to continue\n`);
       console.log(`    Opening in editor for manual resolution...`);
-      console.log(`    Trying VS Code...`);
+      console.log(`    Trying VS Code 3-way merge editor...`);
       let editorProcess;
       let editorName: string;
       editorName = "VS Code";
-      editorProcess = spawnSync("code", ["--wait", mergedFile], {
-        stdio: "inherit",
-      });
+      // Use VS Code's 3-way merge editor: --merge <current> <incoming> <base> <result>
+      // This shows all versions side-by-side with a result panel
+      editorProcess = spawnSync(
+        "code",
+        ["--wait", "--merge", userFile, targetFile, originalFile, mergedFile],
+        {
+          stdio: "inherit",
+        },
+      );
 
       // If VS Code not found, fall back to nano
       if (editorProcess?.error) {
