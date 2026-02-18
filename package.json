@@ -1,12 +1,12 @@
 {
-  "name": "react-native-upgrader",
+  "name": "react-native-upgrade",
   "version": "0.1.0",
   "description": "React Native upgrade plan generator CLI",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "react-native-upgrader": "dist/index.js"
+    "react-native-upgrade": "dist/index.js"
   },
   "files": [
     "dist",
