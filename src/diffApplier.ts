@@ -232,6 +232,12 @@ export const applyDiffFile = async (
   appPackage?: string,
 ): Promise<string> => {
   let filePath = path.join(projectRoot, file.path);
+
+  const baseName = path.basename(file.path);
+  if (["App.tsx", "App.js", "App.jsx"].includes(baseName)) {
+    return `⏭️  File modify skipped (protected): ${file.path}`;
+  }
+
   const isBinary =
     file.isBinary || (file.hunks.length === 0 && file.operation !== "delete");
 
