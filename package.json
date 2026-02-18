@@ -8,10 +8,25 @@
   "bin": {
     "react-native-upgrader": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "react-native",
+    "upgrade",
+    "rn-diff-purge",
+    "cli"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/index.ts",
     "lint": "eslint . --ext .ts",
+    "prepublishOnly": "npm run build",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
