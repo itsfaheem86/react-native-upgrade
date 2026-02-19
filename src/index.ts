@@ -99,8 +99,11 @@ const ensureGitCleanOrConfirm = async (
 };
 
 program
-  .name("react-native-upgrader")
-  .description("Analyze a React Native project and generate an upgrade plan.")
+  .name("react-native-upgrade")
+  .version("0.1.0")
+  .description(
+    "Analyze and upgrade a React Native project to a target version.",
+  )
   .option("--to <version>", "Target React Native version")
   .option("--root <path>", "Project root directory to analyze")
   .action(async () => {
@@ -110,9 +113,15 @@ program
     }>();
 
     if (!opts.to) {
+      console.log(chalk.red("❌ Error: Target version is required."));
       console.log(
-        chalk.yellow("No target version provided. Use --to <version>."),
+        chalk.yellow(
+          "Please specify the React Native version to upgrade to using --to",
+        ),
       );
+      console.log(chalk.cyan("Example:"));
+      console.log(`  react-native-upgrade --to 0.73.0`);
+      console.log(`  react-native-upgrade --to 0.84.0 --root ./my-app`);
       process.exitCode = 1;
       return;
     }
