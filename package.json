@@ -1,5 +1,5 @@
 {
-  "name": "react-native-upgrade",
+  "name": "@codersauthority/react-native-upgrade",
   "version": "0.1.0",
   "description": "React Native upgrade plan generator CLI",
   "license": "MIT",

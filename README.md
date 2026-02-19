@@ -13,7 +13,7 @@ The tool analyzes your project, compares it to a target React Native version, an
 Upgrade your React Native project to a specific version:
 
 ```bash
-npx react-native-upgrade --to 0.84.0
+npx @codersauthority/react-native-upgrade --to 0.84.0
 ```
 
 ### 📋 Options
@@ -26,19 +26,19 @@ npx react-native-upgrade --to 0.84.0
 **Upgrade current project to React Native 0.84.0:**
 
 ```bash
-npx react-native-upgrade --to 0.84.0
+npx @codersauthority/react-native-upgrade --to 0.84.0
 ```
 
 **Upgrade a specific project directory:**
 
 ```bash
-npx react-native-upgrade --to 0.84.0 --root ./my-app
+npx @codersauthority/react-native-upgrade --to 0.84.0 --root ./my-app
 ```
 
 **Upgrade to React Native 0.73.0:**
 
 ```bash
-npx react-native-upgrade --to 0.73.0
+npx @codersauthority/react-native-upgrade --to 0.73.0
 ```
 
 ## 🤝 Contributing
