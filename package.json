@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "React Native upgrade plan generator CLI",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ASMohamedFaheemAnver/react-native-upgrade"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
