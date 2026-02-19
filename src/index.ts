@@ -3,6 +3,8 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import readline from "node:readline";
+import { execSync } from "node:child_process";
 import { Command } from "commander";
 import chalk from "chalk";
 import { detectEnvironment } from "./detection";
@@ -11,6 +13,90 @@ import { parseDiff, formatDiffSummary } from "./diffParser";
 import { applyDiff } from "./diffApplier";
 
 const program = new Command();
+
+const promptYesNo = async (question: string): Promise<boolean> => {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  const answer = await new Promise<string>((resolve) => {
+    rl.question(`${question} (y/N) `, (input) => resolve(input.trim()));
+  });
+
+  rl.close();
+
+  return answer.toLowerCase() === "y" || answer.toLowerCase() === "yes";
+};
+
+const ensureGitCleanOrConfirm = async (
+  projectRoot: string,
+): Promise<boolean> => {
+  try {
+    execSync("git rev-parse --is-inside-work-tree", {
+      cwd: projectRoot,
+      stdio: "ignore",
+    });
+  } catch (error) {
+    const confirmBackup = await promptYesNo(
+      "Git repository not found. Do you have a backup and want to initialize git + commit now?",
+    );
+    if (!confirmBackup) {
+      return false;
+    }
+
+    try {
+      execSync("git init", { cwd: projectRoot, stdio: "ignore" });
+      execSync("git add -A", { cwd: projectRoot, stdio: "ignore" });
+      execSync('git commit -m "Backup"', {
+        cwd: projectRoot,
+        stdio: "ignore",
+      });
+    } catch (commitError) {
+      const details =
+        commitError instanceof Error
+          ? commitError.message
+          : String(commitError);
+      console.log(
+        chalk.yellow(
+          `Unable to initialize git or create the backup commit (${details}). Please ensure git is installed and configured, then try again.`,
+        ),
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  let status = "";
+  try {
+    status = execSync("git status --porcelain", {
+      cwd: projectRoot,
+      encoding: "utf8",
+    }).trim();
+  } catch (statusError) {
+    const details =
+      statusError instanceof Error ? statusError.message : String(statusError);
+    console.log(
+      chalk.yellow(
+        `Unable to check git status (${details}). Please ensure git is available and try again.`,
+      ),
+    );
+    return false;
+  }
+
+  if (status.length === 0) {
+    return true;
+  }
+
+  console.log(
+    chalk.yellow(
+      "Uncommitted changes detected. Please commit or stash them before upgrading.",
+    ),
+  );
+  const proceed = await promptYesNo("Do you want to continue anyway?");
+  return proceed;
+};
 
 program
   .name("react-native-upgrader")
@@ -78,6 +164,12 @@ program
         chalk.cyan(`\n📊 Files to be changed (${parsedDiff.files.length}):`),
       );
       console.log(formatDiffSummary(parsedDiff));
+
+      const canProceed = await ensureGitCleanOrConfirm(projectRoot);
+      if (!canProceed) {
+        process.exitCode = 1;
+        return;
+      }
 
       console.log(chalk.cyan(`\n✅ Applied changes:`));
       const diffStats = await applyDiff(

@@ -60,24 +60,26 @@ const findFileInProject = (
 };
 
 const mergeWithGit = async (options: {
-  original: string;
-  target: string;
-  userVersion: string;
+  from: string;
+  to: string;
+  userContent: string;
   filename: string;
+  targetVersion?: string;
+  fromVersion?: string;
 }): Promise<string> => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "git-merge-"));
 
   try {
-    const originalFile = path.join(tmpDir, "original");
-    const targetFile = path.join(tmpDir, "target");
-    const userFile = path.join(tmpDir, "user");
+    const fromFile = path.join(tmpDir, `${options.fromVersion}-version`);
+    const toFile = path.join(tmpDir, `${options.targetVersion}-version`);
+    const userFile = path.join(tmpDir, `user-version`);
     // Use the original filename for the merged file so VS Code shows the correct name
     const mergedFile = path.join(tmpDir, path.basename(options.filename));
 
     // Write the three versions to temporary files
-    fs.writeFileSync(originalFile, options.original, "utf8");
-    fs.writeFileSync(targetFile, options.target, "utf8");
-    fs.writeFileSync(userFile, options.userVersion, "utf8");
+    fs.writeFileSync(fromFile, options.from, "utf8");
+    fs.writeFileSync(toFile, options.to, "utf8");
+    fs.writeFileSync(userFile, options.userContent, "utf8");
 
     // Use git merge-file for 3-way merge
     // Format: git merge-file [options] current_file base other_file
@@ -86,7 +88,7 @@ const mergeWithGit = async (options: {
 
     try {
       mergedResult = execSync(
-        `git merge-file -p "${userFile}" "${originalFile}" "${targetFile}"`,
+        `git merge-file -p "${userFile}" "${fromFile}" "${toFile}"`,
         {
           encoding: "utf8",
         },
@@ -145,7 +147,7 @@ const mergeWithGit = async (options: {
       // This shows all versions side-by-side with a result panel
       editorProcess = spawnSync(
         "code",
-        ["--wait", "--merge", userFile, targetFile, originalFile, mergedFile],
+        ["--wait", "--merge", userFile, toFile, fromFile, mergedFile],
         {
           stdio: "inherit",
         },
@@ -299,25 +301,19 @@ export const applyDiffFile = async (
       try {
         const baseUrl = buildFileUrl(fromVersion, file.templatePath);
         const originalData = await downloadFile(baseUrl);
-        const originalContent = originalData.toString("utf8");
+        const fromContent = originalData.toString("utf8");
 
         const targetUrl = buildFileUrl(targetVersion, file.templatePath);
         const targetData = await downloadFile(targetUrl);
-        const targetContent = targetData.toString("utf8");
+        const toContent = targetData.toString("utf8");
 
         const mergedContent = await mergeWithGit({
-          original: replaceAppDetailsInContent(
-            originalContent,
-            appName,
-            appPackage,
-          ),
-          target: replaceAppDetailsInContent(
-            targetContent,
-            appName,
-            appPackage,
-          ),
-          userVersion: userContent,
+          from: replaceAppDetailsInContent(fromContent, appName, appPackage),
+          to: replaceAppDetailsInContent(toContent, appName, appPackage),
+          userContent,
           filename: file.path,
+          targetVersion,
+          fromVersion,
         });
 
         fs.writeFileSync(filePath, mergedContent, "utf8");
