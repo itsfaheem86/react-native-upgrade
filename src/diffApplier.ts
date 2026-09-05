@@ -140,25 +140,35 @@ const mergeWithGit = async (options: {
       console.log(`  3. Close the editor to continue\n`);
       console.log(`    Opening in editor for manual resolution...`);
       console.log(`    Trying VS Code 3-way merge editor...`);
+      const isWindows = process.platform === "win32";
       let editorProcess;
       let editorName: string;
       editorName = "VS Code";
       // Use VS Code's 3-way merge editor: --merge <current> <incoming> <base> <result>
       // This shows all versions side-by-side with a result panel
+      // On Windows, the `code` command is actually `code.cmd`, and Node's
+      // spawnSync can't launch .cmd/.bat shims directly without a shell —
+      // it fails with ENOENT even when `code` works fine in a terminal.
       editorProcess = spawnSync(
         "code",
         ["--wait", "--merge", userFile, toFile, fromFile, mergedFile],
         {
           stdio: "inherit",
+          shell: isWindows,
         },
       );
 
-      // If VS Code not found, fall back to nano
+      // If VS Code not found, fall back to a plain-text editor.
+      // nano isn't available on Windows by default, so use notepad there.
       if (editorProcess?.error) {
-        console.log(`    VS Code not found, falling back to nano...`);
-        editorName = "nano";
-        editorProcess = spawnSync("nano", [mergedFile], {
+        const fallbackEditor = isWindows ? "notepad" : "nano";
+        console.log(
+          `    VS Code not found, falling back to ${fallbackEditor}...`,
+        );
+        editorName = fallbackEditor;
+        editorProcess = spawnSync(fallbackEditor, [mergedFile], {
           stdio: "inherit",
+          shell: isWindows,
         });
 
         if (editorProcess.error) {
