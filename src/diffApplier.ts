@@ -76,10 +76,18 @@ const mergeWithGit = async (options: {
     // Use the original filename for the merged file so VS Code shows the correct name
     const mergedFile = path.join(tmpDir, path.basename(options.filename));
 
+    // git merge-file is line-based and treats CRLF vs LF as different content,
+    // so a Windows checkout (CRLF) merged against files downloaded from GitHub
+    // (LF) reports the whole file as one giant "conflict" even when nothing
+    // meaningful changed. Normalize everything to LF for the merge itself,
+    // then restore the user's original line-ending style on the result.
+    const userEol = options.userContent.includes("\r\n") ? "\r\n" : "\n";
+    const toLf = (content: string) => content.replace(/\r\n/g, "\n");
+
     // Write the three versions to temporary files
-    fs.writeFileSync(fromFile, options.from, "utf8");
-    fs.writeFileSync(toFile, options.to, "utf8");
-    fs.writeFileSync(userFile, options.userContent, "utf8");
+    fs.writeFileSync(fromFile, toLf(options.from), "utf8");
+    fs.writeFileSync(toFile, toLf(options.to), "utf8");
+    fs.writeFileSync(userFile, toLf(options.userContent), "utf8");
 
     // Use git merge-file for 3-way merge
     // Format: git merge-file [options] current_file base other_file
@@ -113,6 +121,13 @@ const mergeWithGit = async (options: {
       } else {
         throw error;
       }
+    }
+
+    // Restore the user's original line-ending style before writing to disk,
+    // so the result (and the file the editor opens) looks normal, not like
+    // every line changed just because we normalized to LF for the merge.
+    if (userEol === "\r\n") {
+      mergedResult = mergedResult.replace(/\n/g, "\r\n");
     }
 
     // Write merged content to file
