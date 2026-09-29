@@ -219,8 +219,21 @@ program
         detected.appPackage ?? "",
       )}&name=${encodeURIComponent(detected.appName ?? "")}`;
 
+      if (diffStats.conflictedFiles.length > 0) {
+        console.log(
+          chalk.yellow(
+            `\nMerge conflicts in ${diffStats.conflictedFiles.length} file(s). Resolve the conflict markers (<<<<<<<, =======, >>>>>>>) in:`,
+          ),
+        );
+        for (const conflictedFile of diffStats.conflictedFiles) {
+          console.log(`  - ${conflictedFile}`);
+        }
+      }
+
       if (diffStats.failed === 0) {
-        console.log(chalk.green(`All changes applied successfully!`));
+        if (diffStats.conflictedFiles.length === 0) {
+          console.log(chalk.green(`All changes applied successfully!`));
+        }
       } else {
         console.log(
           chalk.yellow(

@@ -1,25 +1,9 @@
 import fs from "node:fs";
 import https from "node:https";
 import path from "node:path";
-import { execSync, spawnSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import os from "node:os";
-import readline from "node:readline";
 import { DiffFile, replaceAppDetailsInContent } from "./diffParser";
-
-// Helper function to prompt user for confirmation
-const promptUser = (question: string): Promise<boolean> => {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.toLowerCase() === "y" || answer.toLowerCase() === "yes");
-    });
-  });
-};
 
 // Helper function to search for a file in the project directory
 const findFileInProject = (
@@ -59,22 +43,20 @@ const findFileInProject = (
   return searchDir(projectRoot);
 };
 
-const mergeWithGit = async (options: {
+export const mergeWithGit = (options: {
   from: string;
   to: string;
   userContent: string;
   filename: string;
   targetVersion?: string;
   fromVersion?: string;
-}): Promise<string> => {
+}): { content: string; hasConflicts: boolean } => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "git-merge-"));
 
   try {
     const fromFile = path.join(tmpDir, `${options.fromVersion}-version`);
     const toFile = path.join(tmpDir, `${options.targetVersion}-version`);
     const userFile = path.join(tmpDir, `user-version`);
-    // Use the original filename for the merged file so VS Code shows the correct name
-    const mergedFile = path.join(tmpDir, path.basename(options.filename));
 
     // git merge-file is line-based and treats CRLF vs LF as different content,
     // so a Windows checkout (CRLF) merged against files downloaded from GitHub
@@ -91,12 +73,14 @@ const mergeWithGit = async (options: {
 
     // Use git merge-file for 3-way merge
     // Format: git merge-file [options] current_file base other_file
+    // -L labels the conflict markers so they read "<<<<<<< yours" etc.
+    // instead of showing temp file paths.
     let mergeExitCode = 0;
     let mergedResult = "";
 
     try {
       mergedResult = execSync(
-        `git merge-file -p "${userFile}" "${fromFile}" "${toFile}"`,
+        `git merge-file -p -L "yours" -L "${options.fromVersion}" -L "${options.targetVersion}" "${userFile}" "${fromFile}" "${toFile}"`,
         {
           encoding: "utf8",
         },
@@ -124,84 +108,15 @@ const mergeWithGit = async (options: {
     }
 
     // Restore the user's original line-ending style before writing to disk,
-    // so the result (and the file the editor opens) looks normal, not like
-    // every line changed just because we normalized to LF for the merge.
+    // so the result doesn't look like every line changed just because we
+    // normalized to LF for the merge.
     if (userEol === "\r\n") {
       mergedResult = mergedResult.replace(/\n/g, "\r\n");
     }
 
-    // Write merged content to file
-    fs.writeFileSync(mergedFile, mergedResult, "utf8");
-
-    // If there are conflicts, ask user before opening editor
-    if (mergeExitCode > 0) {
-      console.log(`\n⚠️  Merge conflicts detected in ${options.filename}`);
-
-      const shouldResolve = await promptUser(
-        "Would you like to resolve conflicts in an editor? (y/n) ",
-      );
-
-      if (!shouldResolve) {
-        console.log(
-          `    Skipped manual resolution. File contains conflict markers.`,
-        );
-        return fs.readFileSync(mergedFile, "utf8");
-      }
-
-      // Print instructions in console
-      console.log(`\n📋 Instructions:`);
-      console.log(`  1. Resolve all conflicts (<<<<<<, ======, >>>>>>)`);
-      console.log(`  2. Save the file (Ctrl+S)`);
-      console.log(`  3. Close the editor to continue\n`);
-      console.log(`    Opening in editor for manual resolution...`);
-      console.log(`    Trying VS Code 3-way merge editor...`);
-      const isWindows = process.platform === "win32";
-      let editorProcess;
-      let editorName: string;
-      editorName = "VS Code";
-      // Use VS Code's 3-way merge editor: --merge <current> <incoming> <base> <result>
-      // This shows all versions side-by-side with a result panel
-      // On Windows, the `code` command is actually `code.cmd`, and Node's
-      // spawnSync can't launch .cmd/.bat shims directly without a shell —
-      // it fails with ENOENT even when `code` works fine in a terminal.
-      editorProcess = spawnSync(
-        "code",
-        ["--wait", "--merge", userFile, toFile, fromFile, mergedFile],
-        {
-          stdio: "inherit",
-          shell: isWindows,
-        },
-      );
-
-      // If VS Code not found, fall back to a plain-text editor.
-      // nano isn't available on Windows by default, so use notepad there.
-      if (editorProcess?.error) {
-        const fallbackEditor = isWindows ? "notepad" : "nano";
-        console.log(
-          `    VS Code not found, falling back to ${fallbackEditor}...`,
-        );
-        editorName = fallbackEditor;
-        editorProcess = spawnSync(fallbackEditor, [mergedFile], {
-          stdio: "inherit",
-          shell: isWindows,
-        });
-
-        if (editorProcess.error) {
-          throw new Error(
-            `Failed to open editor: ${editorProcess.error.message}`,
-          );
-        }
-      }
-
-      if (editorProcess?.status !== 0) {
-        throw new Error(
-          `${editorName! || ""} closed with exit code ${editorProcess?.status}`,
-        );
-      }
-    }
-
-    // Return the final merged content (after user edits if there were conflicts)
-    return fs.readFileSync(mergedFile, "utf8");
+    // Conflicts are left in place as standard conflict markers so the user
+    // can resolve them later in their editor of choice.
+    return { content: mergedResult, hasConflicts: mergeExitCode > 0 };
   } finally {
     // Cleanup temporary files
     fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -332,7 +247,7 @@ export const applyDiffFile = async (
         const targetData = await downloadFile(targetUrl);
         const toContent = targetData.toString("utf8");
 
-        const mergedContent = await mergeWithGit({
+        const { content, hasConflicts } = mergeWithGit({
           from: replaceAppDetailsInContent(fromContent, appName, appPackage),
           to: replaceAppDetailsInContent(toContent, appName, appPackage),
           userContent,
@@ -341,7 +256,10 @@ export const applyDiffFile = async (
           fromVersion,
         });
 
-        fs.writeFileSync(filePath, mergedContent, "utf8");
+        fs.writeFileSync(filePath, content, "utf8");
+        if (hasConflicts) {
+          return `⚠️  Conflicts in ${file.path} (resolve conflict markers manually)`;
+        }
         return `🔀 Modified ${file.path} (git 3-way merge)`;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
@@ -369,12 +287,14 @@ export const applyDiff = async (
   skipped: number;
   failed: number;
   failedFiles: string[];
+  conflictedFiles: string[];
   total: number;
 }> => {
   let applied = 0;
   let skipped = 0;
   let failed = 0;
   const failedFiles: string[] = [];
+  const conflictedFiles: string[] = [];
 
   for (const file of diffFiles) {
     try {
@@ -394,6 +314,9 @@ export const applyDiff = async (
         failedFiles.push(file.path);
       } else if (trimmed.startsWith("⏭️")) {
         skipped += 1;
+      } else if (trimmed.startsWith("⚠️")) {
+        applied += 1;
+        conflictedFiles.push(file.path);
       } else {
         applied += 1;
       }
@@ -410,6 +333,7 @@ export const applyDiff = async (
     skipped,
     failed,
     failedFiles,
+    conflictedFiles,
     total: diffFiles.length,
   };
 };
