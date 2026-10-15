@@ -84,6 +84,12 @@ describe("bare React Native upgrade (integration)", { skip: !enabled }, () => {
       );
       assert.match(gradle, /ndkVersion = "27\.1\.12297006"/);
       assert.doesNotMatch(gradle, /<<<<<<< /);
+
+      // Clean merges are staged and nothing is left unmerged.
+      const staged = git(projectDir, "diff --cached --name-only").trim().split("\n");
+      assert.ok(staged.includes("package.json"));
+      assert.ok(staged.includes("android/build.gradle"));
+      assert.equal(git(projectDir, "ls-files -u").trim(), "");
     },
   );
 
@@ -115,6 +121,17 @@ describe("bare React Native upgrade (integration)", { skip: !enabled }, () => {
       assert.match(merged, /^<<<<<<< yours$/m);
       assert.match(merged, /^=======$/m);
       assert.match(merged, /^>>>>>>> /m);
+
+      // Like `git merge`: the conflicted file is unmerged (stages 1, 2, 3)...
+      const unmerged = git(projectDir, "ls-files -u -- android/build.gradle")
+        .trim()
+        .split("\n")
+        .map((line) => line.split(/\s+/)[2]);
+      assert.deepEqual(unmerged, ["1", "2", "3"]);
+
+      // ...and the cleanly merged files are staged.
+      const staged = git(projectDir, "diff --cached --name-only").trim().split("\n");
+      assert.ok(staged.includes("package.json"));
     },
   );
 

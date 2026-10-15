@@ -1,9 +1,64 @@
 import fs from "node:fs";
 import https from "node:https";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import os from "node:os";
 import { DiffFile, replaceAppDetailsInContent } from "./diffParser";
+
+const runGit = (cwd: string, args: string[], input?: string): string =>
+  execFileSync("git", args, {
+    cwd,
+    input,
+    encoding: "utf8",
+    stdio: ["pipe", "pipe", "pipe"],
+  }).trim();
+
+// Returns undefined when the project isn't inside a git repo, so staging is
+// skipped rather than failing the upgrade.
+const gitTopLevel = (projectRoot: string): string | undefined => {
+  try {
+    return runGit(projectRoot, ["rev-parse", "--show-toplevel"]);
+  } catch {
+    return undefined;
+  }
+};
+
+// Stage a cleanly applied file (or a deletion), like `git add` after a clean merge.
+const stagePath = (projectRoot: string, absPath: string): void => {
+  const top = gitTopLevel(projectRoot);
+  if (!top) return;
+  const relPath = path.relative(top, absPath).split(path.sep).join("/");
+  runGit(top, ["add", "-A", "--", relPath]);
+};
+
+// Leave a conflicted file unmerged in the index, the way `git merge` does:
+// stage 1 is the base, stage 2 is ours (the user's file), stage 3 is theirs.
+// `git status` then lists it under "Unmerged paths" until it's resolved and
+// `git add`ed.
+const stageConflict = (
+  projectRoot: string,
+  absPath: string,
+  versions: { base: string; ours: string; theirs: string },
+): void => {
+  const top = gitTopLevel(projectRoot);
+  if (!top) return;
+  const relPath = path.relative(top, absPath).split(path.sep).join("/");
+  const hash = (content: string) =>
+    runGit(top, ["hash-object", "-w", "--stdin"], content);
+
+  // update-index can't add stages 1-3 while a stage-0 entry exists, so drop it first.
+  runGit(top, ["rm", "--cached", "-q", "--ignore-unmatch", "--", relPath]);
+
+  const stages: Array<[number, string]> = [
+    [1, versions.base],
+    [2, versions.ours],
+    [3, versions.theirs],
+  ];
+  const entries = stages
+    .map(([stage, content]) => `100644 ${hash(content)} ${stage}\t${relPath}`)
+    .join("\n");
+  runGit(top, ["update-index", "--index-info"], `${entries}\n`);
+};
 
 // Helper function to search for a file in the project directory
 const findFileInProject = (
@@ -190,6 +245,7 @@ export const applyDiffFile = async (
       fs.mkdirSync(dir, { recursive: true });
       const data = await downloadFile(downloadUrl);
       fs.writeFileSync(filePath, data);
+      stagePath(projectRoot, filePath);
       return `📦 Downloaded binary: ${file.path}`;
     }
 
@@ -206,6 +262,7 @@ export const applyDiffFile = async (
         filePath,
         replaceAppDetailsInContent(data.toString("utf8"), appName, appPackage),
       );
+      stagePath(projectRoot, filePath);
       return `✅ Added file: ${file.path}`;
     }
 
@@ -215,6 +272,7 @@ export const applyDiffFile = async (
   if (file.operation === "delete") {
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
+      stagePath(projectRoot, filePath);
     }
     return `🗑️  Deleted ${file.path}`;
   }
@@ -247,9 +305,12 @@ export const applyDiffFile = async (
         const targetData = await downloadFile(targetUrl);
         const toContent = targetData.toString("utf8");
 
+        const baseContent = replaceAppDetailsInContent(fromContent, appName, appPackage);
+        const theirContent = replaceAppDetailsInContent(toContent, appName, appPackage);
+
         const { content, hasConflicts } = mergeWithGit({
-          from: replaceAppDetailsInContent(fromContent, appName, appPackage),
-          to: replaceAppDetailsInContent(toContent, appName, appPackage),
+          from: baseContent,
+          to: theirContent,
           userContent,
           filename: file.path,
           targetVersion,
@@ -258,8 +319,14 @@ export const applyDiffFile = async (
 
         fs.writeFileSync(filePath, content, "utf8");
         if (hasConflicts) {
+          stageConflict(projectRoot, filePath, {
+            base: baseContent,
+            ours: userContent,
+            theirs: theirContent,
+          });
           return `⚠️  Conflicts in ${file.path} (resolve conflict markers manually)`;
         }
+        stagePath(projectRoot, filePath);
         return `🔀 Modified ${file.path} (git 3-way merge)`;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
