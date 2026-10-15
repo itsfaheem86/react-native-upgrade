@@ -180,7 +180,7 @@ program
         return;
       }
 
-      console.log(chalk.cyan(`\n✅ Applied changes:`));
+      console.log(chalk.cyan(`\n📦 Applying changes:`));
       const diffStats = await applyDiff(
         parsedDiff.files,
         projectRoot,
@@ -219,57 +219,98 @@ program
         detected.appPackage ?? "",
       )}&name=${encodeURIComponent(detected.appName ?? "")}`;
 
-      if (diffStats.conflictedFiles.length > 0) {
+      const conflictCount = diffStats.conflictedFiles.length;
+      const cleanCount = diffStats.applied - conflictCount;
+      const pendingCount = conflictCount + diffStats.failed;
+      const upgradeLabel = `${detectedVersion} → ${targetVersion}`;
+      const divider = "─".repeat(60);
+
+      console.log(`\n${divider}`);
+      if (pendingCount === 0) {
         console.log(
-          chalk.yellow(
-            `\nMerge conflicts in ${diffStats.conflictedFiles.length} file(s). They are left unmerged in the git index (see \`git status\`). Resolve the conflict markers (<<<<<<<, =======, >>>>>>>), then \`git add\` each file:`,
+          chalk.green.bold(`✅ Upgrade ${upgradeLabel} complete.`),
+        );
+        console.log(
+          chalk.green(
+            `   All changes applied successfully! ${cleanCount} file(s) updated and staged.`,
           ),
         );
-        for (const conflictedFile of diffStats.conflictedFiles) {
-          console.log(`  - ${conflictedFile}`);
-        }
-      }
-
-      if (diffStats.failed === 0) {
-        if (diffStats.conflictedFiles.length === 0) {
-          console.log(chalk.green(`All changes applied successfully!`));
-        }
       } else {
         console.log(
-          chalk.yellow(
-            `\nSome changes failed (${diffStats.failed}). Please apply them manually before proceeding:`,
+          chalk.yellow.bold(
+            `⚠️  Upgrade ${upgradeLabel} applied, but ${pendingCount} file(s) need your attention.`,
           ),
         );
-        for (const failedFile of diffStats.failedFiles) {
-          console.log(`  - ${failedFile}`);
+        const parts = [`${cleanCount} file(s) updated and staged`];
+        if (conflictCount > 0) {
+          parts.push(`${conflictCount} with merge conflicts`);
         }
-        console.log(`\nManual apply guidance:`);
-        console.log(`  1. Open the upgrade helper URL:`);
-        console.log(`     ${upgradeHelperUrl}`);
-        console.log(
-          `  2. Apply the failed patches(${diffStats.failed}) manually to the files listed above.`,
+        if (diffStats.failed > 0) {
+          parts.push(`${diffStats.failed} could not be applied`);
+        }
+        console.log(chalk.yellow(`   ${parts.join(", ")}.`));
+      }
+      console.log(divider);
+
+      console.log(chalk.cyan.bold(`\n📋 Remaining tasks:`));
+      let step = 0;
+      const task = (title: string, lines: string[] = []) => {
+        step += 1;
+        console.log(`\n  ${chalk.bold(`${step}. ${title}`)}`);
+        for (const line of lines) {
+          console.log(`     ${line}`);
+        }
+      };
+
+      if (conflictCount > 0) {
+        task(
+          chalk.yellow(
+            `Merge conflicts in ${conflictCount} file(s) — resolve them (required)`,
+          ),
+          [
+            "These files are left unmerged in the git index (see `git status`).",
+            "Fix the conflict markers (<<<<<<<, =======, >>>>>>>), then `git add` each file:",
+            ...diffStats.conflictedFiles.map((file) => `  - ${file}`),
+          ],
         );
       }
 
-      console.log(chalk.cyan(`\n🛠️  Next steps after the upgrade:`));
-      console.log(`  1. Remove node_modules and reinstall dependencies:`);
-      console.log(`     rm -rf node_modules`);
-      console.log(`     ${installCommand}`);
-      console.log(`  2. Clear caches if you hit build or Metro issues:`);
-      console.log(`     ${packageManager} start -- --reset-cache`);
-      console.log(`  3. If iOS is used, install pods:`);
+      if (diffStats.failed > 0) {
+        task(
+          chalk.yellow(
+            `Some changes failed (${diffStats.failed}) — apply them manually (required)`,
+          ),
+          [
+            ...diffStats.failedFiles.map((file) => `  - ${file}`),
+            "Use the upgrade helper to see the expected changes:",
+            upgradeHelperUrl,
+          ],
+        );
+      }
+
+      task("Remove node_modules and reinstall dependencies:", [
+        "rm -rf node_modules",
+        installCommand,
+      ]);
       if (fs.existsSync(iosDir)) {
-        console.log(`     cd ios && pod install`);
-      } else {
-        console.log(`     (no ios/ directory found)`);
+        task("Install iOS pods:", ["cd ios && pod install"]);
       }
-      console.log(`  4. Rebuild the app:`);
-      console.log(`     ${packageManager} run android`);
-      console.log(`     ${packageManager} run ios`);
-      console.log(`  5. Review and fix upgrade issues:`);
-      console.log(`     - Check for incompatible or deprecated dependencies`);
-      console.log(`     - Search for deprecated APIs and adjust code`);
-      console.log(`     - Run tests and address warnings/errors`);
+      task("Rebuild the app:", [
+        `${packageManager} run android`,
+        ...(fs.existsSync(iosDir) ? [`${packageManager} run ios`] : []),
+      ]);
+      task("Review and fix upgrade issues:", [
+        "- Check for incompatible or deprecated dependencies",
+        "- Search for deprecated APIs and adjust code",
+        "- Run tests and address warnings/errors",
+      ]);
+      task("Commit the upgrade once everything builds and runs.");
+
+      console.log(
+        chalk.gray(
+          `\nTip: if you hit build or Metro issues, clear caches with \`${packageManager} start -- --reset-cache\`.`,
+        ),
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.log(chalk.red(`Failed to analyze project: ${message}`));
