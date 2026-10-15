@@ -222,7 +222,7 @@ program
       if (diffStats.conflictedFiles.length > 0) {
         console.log(
           chalk.yellow(
-            `\nMerge conflicts in ${diffStats.conflictedFiles.length} file(s). Resolve the conflict markers (<<<<<<<, =======, >>>>>>>) in:`,
+            `\nMerge conflicts in ${diffStats.conflictedFiles.length} file(s). They are left unmerged in the git index (see \`git status\`). Resolve the conflict markers (<<<<<<<, =======, >>>>>>>), then \`git add\` each file:`,
           ),
         );
         for (const conflictedFile of diffStats.conflictedFiles) {
