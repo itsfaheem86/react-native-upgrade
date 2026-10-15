@@ -6,7 +6,9 @@ export const extractVersion = (value?: string): string | undefined => {
   if (!value) {
     return undefined;
   }
-  const match = value.match(/\d+\.\d+\.\d+/);
+  // Keep a prerelease suffix (e.g. 0.88.0-rc.1): rn-diff-purge publishes
+  // diffs and release branches under that exact name.
+  const match = value.match(/\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?/);
   return match?.[0];
 };
 

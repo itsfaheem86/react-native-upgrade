@@ -9,6 +9,12 @@ describe("extractVersion", () => {
     assert.equal(extractVersion("react-native@0.77.1"), "0.77.1");
   });
 
+  it("keeps a prerelease suffix", () => {
+    assert.equal(extractVersion("0.88.0-rc.1"), "0.88.0-rc.1");
+    assert.equal(extractVersion("^0.88.0-rc.0"), "0.88.0-rc.0");
+    assert.equal(extractVersion("0.88.0"), "0.88.0");
+  });
+
   it("returns undefined when there is no version or no input", () => {
     assert.equal(extractVersion(undefined), undefined);
     assert.equal(extractVersion(""), undefined);
